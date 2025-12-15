@@ -3,7 +3,11 @@
 import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import type { Food } from "@/types";
-import { getFoods, type GetFoodsResult } from "@/lib/actions/meals";
+import {
+  getFoods,
+  type GetFoodsResult,
+  toggleFoodFavorite,
+} from "@/lib/actions/meals";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -20,7 +24,7 @@ export default function AddPage() {
 
   // Fetch foods from database
   useEffect(() => {
-    async function fetchFoods() {
+    async function fetchFoodsFromServer() {
       try {
         const fetchedFoods = await getFoods();
         setFoods(fetchedFoods);
@@ -30,7 +34,7 @@ export default function AddPage() {
         setLoading(false);
       }
     }
-    fetchFoods();
+    fetchFoodsFromServer();
   }, []);
 
   // Filter foods based on search
@@ -52,9 +56,61 @@ export default function AddPage() {
     router.push(`/add-meal/select/${food.id}`);
   };
 
-  const handleFavoriteClick = (e: React.MouseEvent, food: Food) => {
+  const handleFavoriteClick = async (
+    e: React.MouseEvent,
+    food: Food,
+  ): Promise<void> => {
     e.stopPropagation();
-    // Empty callback handler for now
+
+    const newFavorite = !food.favorite;
+
+    // Optimistically update UI
+    setFoods((prevFoods) => {
+      const removeFromList = (list: Food[]) =>
+        list.filter((item) => item.id !== food.id);
+
+      const updatedFood: Food = { ...food, favorite: newFavorite };
+
+      let favoriteFoods = prevFoods.favoriteFoods;
+      let regularFoods = prevFoods.regularFoods;
+
+      // Remove from both lists first to avoid duplicates
+      favoriteFoods = removeFromList(favoriteFoods);
+      regularFoods = removeFromList(regularFoods);
+
+      if (newFavorite) {
+        favoriteFoods = [...favoriteFoods, updatedFood].sort((a, b) =>
+          a.name.localeCompare(b.name),
+        );
+      } else {
+        regularFoods = [...regularFoods, updatedFood].sort((a, b) =>
+          a.name.localeCompare(b.name),
+        );
+      }
+
+      return {
+        favoriteFoods,
+        regularFoods,
+      };
+    });
+
+    try {
+      const result = await toggleFoodFavorite(food.id, newFavorite);
+      if (!result.success) {
+        console.error(
+          "Failed to update favorite status:",
+          result.message || "Unknown error",
+        );
+        // Refetch to get consistent state from server
+        const latestFoods = await getFoods();
+        setFoods(latestFoods);
+      }
+    } catch (error) {
+      console.error("Error updating favorite status:", error);
+      // Refetch to get consistent state from server
+      const latestFoods = await getFoods();
+      setFoods(latestFoods);
+    }
   };
 
   return (
@@ -90,44 +146,44 @@ export default function AddPage() {
             <h3 className="text-muted-foreground text-sm font-semibold">
               Favorites
             </h3>
-            <div className="grid grid-cols-3 gap-2">
-              {filteredFoods.favoriteFoods.map((food) => (
+            <div className="grid auto-rows-max grid-cols-2 gap-2">
+              {filteredFoods.favoriteFoods.map((food: Food) => (
                 <Card
                   key={food.id}
                   onClick={() => handleFoodSelected(food)}
-                  className="hover:bg-accent/5 border-accent/30 bg-accent/10 relative cursor-pointer transition-colors"
+                  className="hover:bg-accent/5 relative cursor-pointer transition-colors"
                 >
-                  <CardContent className="flex flex-col items-center gap-2 px-3 py-1">
+                  <CardContent className="flex flex-col items-center gap-3 px-4 py-1">
                     <button
                       onClick={(e) => handleFavoriteClick(e, food)}
                       className="absolute top-2 right-2 z-10 p-1 transition-opacity hover:opacity-80"
                     >
                       <Star
-                        className={`h-4 w-4 ${
+                        className={`h-5 w-5 ${
                           food.favorite
-                            ? "fill-orange-500 text-orange-500"
+                            ? "fill-primary text-primary"
                             : "text-muted-foreground"
                         }`}
                       />
                     </button>
-                    <h3 className="mt-1 text-center text-sm font-medium">
+                    <h3 className="mt-1 text-center text-base font-medium">
                       {food.name}
                     </h3>
-                    <span className="text-3xl">{food.icon}</span>
-                    <div className="mt-auto flex w-full items-center justify-center gap-2 pt-1">
+                    <span className="text-4xl">{food.icon}</span>
+                    <div className="mt-auto flex w-full items-center justify-center gap-4 pt-2">
                       <div className="flex flex-col items-center">
-                        <span className="text-xs font-bold">
+                        <span className="text-sm font-bold">
                           {food.calories}
                         </span>
-                        <span className="text-muted-foreground text-[10px]">
+                        <span className="text-muted-foreground text-xs">
                           cal
                         </span>
                       </div>
                       <div className="flex flex-col items-center">
-                        <span className="text-xs font-bold">
+                        <span className="text-sm font-bold">
                           {food.protein}
                         </span>
-                        <span className="text-muted-foreground text-[10px]">
+                        <span className="text-muted-foreground text-xs">
                           grams
                         </span>
                       </div>
@@ -169,9 +225,9 @@ export default function AddPage() {
                       className="absolute top-2 right-2 z-10 p-1 transition-opacity hover:opacity-80"
                     >
                       <Star
-                        className={`h-4 w-4 ${
+                        className={`h-5 w-5 ${
                           food.favorite
-                            ? "fill-orange-500 text-orange-500"
+                            ? "fill-primary text-primary"
                             : "text-muted-foreground"
                         }`}
                       />

@@ -35,7 +35,7 @@ export interface CreateFoodResult {
 
 export async function createFood(
   prevState: CreateFoodResult | null, // Required for useActionState hook
-  formData: FormData
+  formData: FormData,
 ): Promise<CreateFoodResult> {
   try {
     // Extract form data
@@ -141,6 +141,46 @@ export async function getFoods(): Promise<GetFoodsResult> {
   }
 }
 
+export interface ToggleFoodFavoriteResult {
+  success: boolean;
+  message?: string;
+}
+
+export async function toggleFoodFavorite(
+  foodId: string,
+  favorite: boolean,
+): Promise<ToggleFoodFavoriteResult> {
+  try {
+    await dbConnect();
+
+    const food = await Food.findById(foodId);
+    if (!food) {
+      return {
+        success: false,
+        message: "Food not found",
+      };
+    }
+
+    food.favorite = favorite;
+    await food.save();
+
+    // Revalidate pages that depend on foods
+    revalidatePath("/add-meal");
+    revalidatePath("/");
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error toggling favorite for food:", error);
+    return {
+      success: false,
+      message:
+        error instanceof Error
+          ? error.message
+          : "An error occurred while updating favorite status",
+    };
+  }
+}
+
 // Zod schema for meal creation validation
 const createMealSchema = z.object({
   foodId: z.string().min(1, "Food ID is required"),
@@ -174,7 +214,7 @@ function getServingMultiplier(servingSize: string): number {
 }
 
 export async function createMeal(
-  input: CreateMealInput
+  input: CreateMealInput,
 ): Promise<CreateMealResult> {
   try {
     // Validate input with Zod
@@ -297,11 +337,11 @@ export async function getTodayMeals(): Promise<DailyStats> {
     // Calculate totals
     const totalCalories = formattedMeals.reduce(
       (sum, meal) => sum + meal.calories,
-      0
+      0,
     );
     const totalProtein = formattedMeals.reduce(
       (sum, meal) => sum + meal.protein,
-      0
+      0,
     );
 
     return {
@@ -324,7 +364,7 @@ export async function getTodayMeals(): Promise<DailyStats> {
 }
 
 export async function deleteMeal(
-  mealId: string
+  mealId: string,
 ): Promise<{ success: boolean; message?: string }> {
   try {
     await dbConnect();
@@ -382,7 +422,7 @@ export async function getHistoryMeals(): Promise<DailyStats[]> {
       .map(([date, meals]) => {
         const totalCalories = meals.reduce(
           (sum, meal) => sum + meal.calories,
-          0
+          0,
         );
         const totalProtein = meals.reduce((sum, meal) => sum + meal.protein, 0);
 
