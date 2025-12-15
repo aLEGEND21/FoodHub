@@ -1,25 +1,23 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import type { Meal, DailyStats } from "@/types";
-import { getTodayMeals, deleteMeal } from "@/lib/actions/meals";
-import { getTodayHabits, updateHabits } from "@/lib/actions/habits";
-import { CALORIE_GOAL, PROTEIN_GOAL } from "@/lib/constants";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { Button } from "@/components/ui/button";
-import { ChevronRight, Zap, Apple, Trash2 } from "lucide-react";
+import { getTodayHabits, updateHabits } from "@/lib/actions/habits";
+import { deleteMeal, getTodayMeals } from "@/lib/actions/meals";
+import { CALORIE_GOAL, PROTEIN_GOAL } from "@/lib/constants";
+import type { DailyStats, Meal } from "@/types";
+import { Apple, ChevronRight, Trash2, Zap } from "lucide-react";
+import { useEffect, useState } from "react";
 
 export default function HomePage() {
   const [todayStats, setTodayStats] = useState<DailyStats | null>(null);
   const [allMeals, setAllMeals] = useState<Meal[]>([]);
-  const [expandedMeals, setExpandedMeals] = useState<Set<string>>(
-    new Set(["breakfast", "lunch", "dinner", "snack"])
-  );
+  const [expandedMeals, setExpandedMeals] = useState<Set<string>>(new Set());
   const [workoutDone, setWorkoutDone] = useState(false);
   const [fruitsCount, setFruitsCount] = useState(0);
 
@@ -49,16 +47,6 @@ export default function HomePage() {
     }
   };
 
-  const toggleMealType = (type: string) => {
-    const newExpanded = new Set(expandedMeals);
-    if (newExpanded.has(type)) {
-      newExpanded.delete(type);
-    } else {
-      newExpanded.add(type);
-    }
-    setExpandedMeals(newExpanded);
-  };
-
   const handleWorkoutClick = async () => {
     const newWorkoutDone = !workoutDone;
     setWorkoutDone(newWorkoutDone);
@@ -82,15 +70,16 @@ export default function HomePage() {
 
   const getWorkoutColor = () => {
     return workoutDone
-      ? "bg-green-500/20 text-green-700 dark:text-green-300 hover:bg-green-500/30"
-      : "bg-muted hover:bg-muted/80";
+      ? "!bg-green-500/30 text-green-700 dark:text-green-300 hover:!bg-green-500/40 border-green-500/50 dark:border-green-500/20 dark:!bg-green-500/10 dark:hover:!bg-green-500/15"
+      : "!bg-red-500/30 text-red-700 dark:text-red-300 hover:!bg-red-500/40 border-red-500/50 dark:border-red-500/20 dark:!bg-red-500/10 dark:hover:!bg-red-500/15";
   };
 
   const getFruitColor = () => {
-    if (fruitsCount === 0) return "bg-muted hover:bg-muted/80";
+    if (fruitsCount === 0)
+      return "!bg-red-500/30 text-red-700 dark:text-red-300 hover:!bg-red-500/40 border-red-500/50 dark:border-red-500/20 dark:!bg-red-500/10 dark:hover:!bg-red-500/15";
     if (fruitsCount === 1)
-      return "bg-orange-500/20 text-orange-700 dark:text-orange-300 hover:bg-orange-500/30";
-    return "bg-green-500/20 text-green-700 dark:text-green-300 hover:bg-green-500/30";
+      return "!bg-yellow-500/30 text-yellow-700 dark:text-yellow-300 hover:!bg-yellow-500/40 border-yellow-500/50 dark:border-yellow-500/20 dark:!bg-yellow-500/10 dark:hover:!bg-yellow-500/15";
+    return "!bg-green-500/30 text-green-700 dark:text-green-300 hover:!bg-green-500/40 border-green-500/50 dark:border-green-500/20 dark:!bg-green-500/10 dark:hover:!bg-green-500/15";
   };
 
   const mealsByType = {
@@ -112,10 +101,10 @@ export default function HomePage() {
 
   return (
     <>
-      <main className="max-w-md mx-auto w-full px-4 pt-6 space-y-6 pb-24 md:flex-1 md:overflow-y-auto md:scrollbar-hide md:pb-6">
+      <main className="md:scrollbar-hide bg-background mx-auto w-full max-w-md space-y-6 px-4 pt-6 md:flex-1 md:overflow-y-auto md:pb-6">
         {/* Header */}
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold">Today</h1>
+          <h1 className="text-foreground text-3xl font-bold">Today</h1>
           <p className="text-muted-foreground">
             {new Date().toLocaleDateString([], {
               weekday: "long",
@@ -128,43 +117,43 @@ export default function HomePage() {
         {/* Stats Summary */}
         {todayStats && (
           <div className="grid grid-cols-2 gap-3">
-            <Card className="bg-linear-to-br from-primary/10 to-primary/5 border-primary/20">
+            <Card className="from-primary/10 to-primary/5 border-primary/20 dark:from-primary/20 dark:to-primary/10 bg-gradient-to-br">
               <CardContent className="pt-4">
                 <div className="text-center">
-                  <div className="text-3xl font-bold text-primary">
+                  <div className="text-primary text-3xl font-bold">
                     {todayStats.totalCalories}
                   </div>
-                  <div className="text-xs text-muted-foreground mt-1">
+                  <div className="text-muted-foreground mt-1 text-xs">
                     Calories
                   </div>
-                  <div className="mt-2 bg-muted/50 h-2 rounded-full overflow-hidden">
+                  <div className="bg-muted/50 dark:bg-muted/30 border-accent/20 dark:border-accent/30 mt-2 h-2 overflow-hidden rounded-full border">
                     <div
                       className="bg-primary h-full transition-all"
                       style={{ width: `${caloriePercent}%` }}
                     />
                   </div>
-                  <div className="text-xs text-muted-foreground mt-1">
-                    {calorieGoal} goal
+                  <div className="text-muted-foreground mt-1 text-xs">
+                    {calorieGoal} cal goal
                   </div>
                 </div>
               </CardContent>
             </Card>
-            <Card className="bg-linear-to-br from-accent/10 to-accent/5 border-accent/20">
+            <Card className="from-accent/10 to-accent/5 border-accent/20 dark:from-accent/20 dark:to-accent/10 bg-gradient-to-br">
               <CardContent className="pt-4">
                 <div className="text-center">
-                  <div className="text-3xl font-bold text-accent">
-                    {todayStats.totalProtein}g
+                  <div className="text-accent text-3xl font-bold">
+                    {todayStats.totalProtein}
                   </div>
-                  <div className="text-xs text-muted-foreground mt-1">
-                    Protein
+                  <div className="text-muted-foreground mt-1 text-xs">
+                    Grams
                   </div>
-                  <div className="mt-2 bg-muted/50 h-2 rounded-full overflow-hidden">
+                  <div className="bg-muted/50 dark:bg-muted/30 border-accent/20 dark:border-accent/30 mt-2 h-2 overflow-hidden rounded-full border">
                     <div
                       className="bg-accent h-full transition-all"
                       style={{ width: `${proteinPercent}%` }}
                     />
                   </div>
-                  <div className="text-xs text-muted-foreground mt-1">
+                  <div className="text-muted-foreground mt-1 text-xs">
                     {proteinGoal}g goal
                   </div>
                 </div>
@@ -177,18 +166,18 @@ export default function HomePage() {
         <div className="grid grid-cols-2 gap-3">
           <Button
             onClick={handleWorkoutClick}
-            className={`h-16 flex-col gap-1 transition-all ${getWorkoutColor()}`}
+            className={`h-24 flex-col gap-1 transition-all ${getWorkoutColor()}`}
             variant="outline"
           >
-            <Zap className="w-5 h-5" />
+            <Zap className="h-5 w-5" />
             <span className="text-xs font-medium">{workoutLabel}</span>
           </Button>
           <Button
             onClick={handleFruitsClick}
-            className={`h-16 flex-col gap-1 transition-all ${getFruitColor()}`}
+            className={`h-24 flex-col gap-1 transition-all ${getFruitColor()}`}
             variant="outline"
           >
-            <Apple className="w-5 h-5" />
+            <Apple className="h-5 w-5" />
             <span className="text-xs font-medium">
               {fruitsLabels[fruitsCount]}
             </span>
@@ -202,16 +191,16 @@ export default function HomePage() {
             const typeLabel = type.charAt(0).toUpperCase() + type.slice(1);
             const isExpanded = expandedMeals.has(type);
             const sortedMeals = [...meals].sort((a, b) =>
-              a.name.localeCompare(b.name)
+              a.name.localeCompare(b.name),
             );
 
             const typeCalories = meals.reduce(
               (sum, meal) => sum + meal.calories,
-              0
+              0,
             );
             const typeProtein = meals.reduce(
               (sum, meal) => sum + meal.protein,
-              0
+              0,
             );
             const itemCount = meals.length;
 
@@ -231,74 +220,74 @@ export default function HomePage() {
                   }
                 }}
               >
-                <Card className="overflow-hidden shadow-sm border-border/50">
-                  <CollapsibleTrigger className="w-full px-5 flex items-start justify-between">
+                <Card className="border-border/50 dark:border-border/30 gap-3 overflow-hidden py-3 shadow-sm">
+                  <CollapsibleTrigger className="hover:bg-muted/50 dark:hover:bg-muted/30 flex w-full items-center justify-between px-5 py-3 transition-colors">
                     <div className="flex flex-col items-start gap-1">
-                      <span className="text-base font-semibold">
+                      <span className="text-foreground text-base font-semibold">
                         {typeLabel}
                       </span>
-                      <span className="text-xs text-muted-foreground">
+                      <span className="text-muted-foreground text-xs">
                         {itemCount} {itemCount === 1 ? "item" : "items"}
                       </span>
                     </div>
-                    <div className="flex items-center gap-4">
-                      <div className="text-right">
+                    <div className="ml-auto flex items-center gap-4">
+                      <div className="flex items-center justify-end gap-3 text-right">
                         <div className="flex items-baseline gap-1">
-                          <p className="text-sm font-bold text-primary">
+                          <p className="text-primary text-sm font-bold">
                             {typeCalories}
                           </p>
-                          <p className="text-xs text-muted-foreground">cal</p>
+                          <p className="text-muted-foreground text-xs">cal</p>
                         </div>
-                        <div className="flex items-baseline gap-1 mt-0.5">
-                          <p className="text-sm font-bold text-primary">
+                        <div className="flex items-baseline gap-1">
+                          <p className="text-primary text-sm font-bold">
                             {typeProtein}
                           </p>
-                          <p className="text-xs text-muted-foreground">g</p>
+                          <p className="text-muted-foreground text-xs">g</p>
                         </div>
                       </div>
                       <ChevronRight
-                        className={`w-5 h-5 text-muted-foreground transition-transform ${
+                        className={`text-muted-foreground h-5 w-5 shrink-0 transition-transform ${
                           isExpanded ? "rotate-90" : ""
                         }`}
                       />
                     </div>
                   </CollapsibleTrigger>
                   <CollapsibleContent>
-                    <div className="border-t border-border/50 bg-muted/20">
+                    <div className="border-border/50 dark:border-border/30 bg-muted/20 dark:bg-muted/10 border-t">
                       {sortedMeals.length === 0 ? (
-                        <div className="px-5 py-3 text-center">
-                          <p className="text-sm text-muted-foreground">
+                        <div className="px-5 py-3 pt-6 text-center">
+                          <p className="text-muted-foreground text-sm">
                             No meals logged for {typeLabel.toLowerCase()}
                           </p>
                         </div>
                       ) : (
-                        <div className="py-3">
+                        <div className="pt-3">
                           {sortedMeals.map((meal, index) => (
                             <div
                               key={meal.id}
-                              className={`flex items-center justify-between px-5 py-2 group ${
+                              className={`group hover:bg-muted/30 dark:hover:bg-muted/20 flex items-center justify-between px-5 py-2 transition-colors ${
                                 index !== sortedMeals.length - 1
-                                  ? "border-b border-border/30"
+                                  ? "border-border/30 dark:border-border/20 border-b"
                                   : ""
                               }`}
                             >
-                              <div className="flex items-center gap-3 flex-1">
+                              <div className="flex flex-1 items-center gap-3">
                                 <span className="text-base">{meal.icon}</span>
                                 <div className="flex-1">
-                                  <p className="font-medium text-xs leading-tight">
+                                  <p className="text-foreground text-xs leading-tight font-medium">
                                     {meal.name}
                                   </p>
                                 </div>
                               </div>
                               <div className="flex items-center gap-4">
-                                <div className="text-right flex items-center gap-3">
-                                  <p className="text-[10px] text-muted-foreground">
+                                <div className="flex items-center gap-3 text-right">
+                                  <p className="text-muted-foreground text-[10px]">
                                     {meal.servingSize} serving
                                   </p>
-                                  <p className="text-xs font-semibold">
+                                  <p className="text-foreground text-xs font-semibold">
                                     {meal.calories} cal
                                   </p>
-                                  <p className="text-xs font-semibold">
+                                  <p className="text-foreground text-xs font-semibold">
                                     {meal.protein} g
                                   </p>
                                 </div>
@@ -309,9 +298,9 @@ export default function HomePage() {
                                     e.stopPropagation();
                                     handleDeleteMeal(meal.id);
                                   }}
-                                  className="h-8 w-8 p-0"
+                                  className="hover:bg-destructive/10 dark:hover:bg-destructive/20 h-8 w-8 p-0"
                                 >
-                                  <Trash2 className="w-4 h-4 text-destructive" />
+                                  <Trash2 className="text-destructive h-4 w-4" />
                                 </Button>
                               </div>
                             </div>

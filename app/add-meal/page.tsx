@@ -36,10 +36,10 @@ export default function AddPage() {
   // Filter foods based on search
   const filteredFoods = useMemo(() => {
     const sortedFavoriteFoods = foods.favoriteFoods.filter((food) =>
-      food.name.toLowerCase().includes(search.toLowerCase())
+      food.name.toLowerCase().includes(search.toLowerCase()),
     );
     const sortedRegularFoods = foods.regularFoods.filter((food) =>
-      food.name.toLowerCase().includes(search.toLowerCase())
+      food.name.toLowerCase().includes(search.toLowerCase()),
     );
     return {
       favoriteFoods: sortedFavoriteFoods,
@@ -59,7 +59,7 @@ export default function AddPage() {
 
   return (
     <>
-      <main className="max-w-md mx-auto w-full px-4 pt-6 space-y-4 pb-20 md:pb-4">
+      <main className="mx-auto w-full max-w-md space-y-4 px-4 pt-6">
         {/* Header */}
         <div className="space-y-2">
           <h1 className="text-3xl font-bold">Add Meal</h1>
@@ -79,7 +79,7 @@ export default function AddPage() {
 
         {/* Loading State */}
         {loading && (
-          <div className="text-center text-muted-foreground py-8">
+          <div className="text-muted-foreground py-8 text-center">
             Loading foods...
           </div>
         )}
@@ -87,7 +87,7 @@ export default function AddPage() {
         {/* Favorite Foods */}
         {!loading && filteredFoods.favoriteFoods.length > 0 && (
           <div className="space-y-3">
-            <h3 className="text-sm font-semibold text-muted-foreground">
+            <h3 className="text-muted-foreground text-sm font-semibold">
               Favorites
             </h3>
             <div className="grid grid-cols-3 gap-2">
@@ -95,31 +95,31 @@ export default function AddPage() {
                 <Card
                   key={food.id}
                   onClick={() => handleFoodSelected(food)}
-                  className="relative cursor-pointer hover:bg-accent/5 transition-colors border-accent/30 bg-accent/10"
+                  className="hover:bg-accent/5 border-accent/30 bg-accent/10 relative cursor-pointer transition-colors"
                 >
-                  <CardContent className="px-3 py-1 flex flex-col items-center gap-2">
+                  <CardContent className="flex flex-col items-center gap-2 px-3 py-1">
                     <button
                       onClick={(e) => handleFavoriteClick(e, food)}
-                      className="absolute top-2 right-2 p-1 hover:opacity-80 transition-opacity z-10"
+                      className="absolute top-2 right-2 z-10 p-1 transition-opacity hover:opacity-80"
                     >
                       <Star
-                        className={`w-4 h-4 ${
+                        className={`h-4 w-4 ${
                           food.favorite
                             ? "fill-orange-500 text-orange-500"
                             : "text-muted-foreground"
                         }`}
                       />
                     </button>
-                    <h3 className="text-sm font-medium text-center mt-1">
+                    <h3 className="mt-1 text-center text-sm font-medium">
                       {food.name}
                     </h3>
                     <span className="text-3xl">{food.icon}</span>
-                    <div className="flex items-center gap-2 w-full justify-center mt-auto pt-1">
+                    <div className="mt-auto flex w-full items-center justify-center gap-2 pt-1">
                       <div className="flex flex-col items-center">
                         <span className="text-xs font-bold">
                           {food.calories}
                         </span>
-                        <span className="text-[10px] text-muted-foreground">
+                        <span className="text-muted-foreground text-[10px]">
                           cal
                         </span>
                       </div>
@@ -127,7 +127,7 @@ export default function AddPage() {
                         <span className="text-xs font-bold">
                           {food.protein}
                         </span>
-                        <span className="text-[10px] text-muted-foreground">
+                        <span className="text-muted-foreground text-[10px]">
                           grams
                         </span>
                       </div>
@@ -143,7 +143,7 @@ export default function AddPage() {
         {!loading &&
           filteredFoods.favoriteFoods.length === 0 &&
           filteredFoods.regularFoods.length === 0 && (
-            <div className="text-center text-muted-foreground py-8">
+            <div className="text-muted-foreground py-8 text-center">
               {search
                 ? "No foods found matching your search."
                 : "No foods found. Create your first food!"}
@@ -153,39 +153,39 @@ export default function AddPage() {
         {/* All Foods - Alphabetically Organized */}
         {!loading && filteredFoods.regularFoods.length > 0 && (
           <div className="space-y-3">
-            <h3 className="text-sm font-semibold text-muted-foreground">
+            <h3 className="text-muted-foreground text-sm font-semibold">
               All Foods
             </h3>
-            <div className="grid grid-cols-2 gap-2 auto-rows-max">
+            <div className="grid auto-rows-max grid-cols-2 gap-2">
               {filteredFoods.regularFoods.map((food: Food) => (
                 <Card
                   key={food.id}
                   onClick={() => handleFoodSelected(food)}
-                  className="relative cursor-pointer hover:bg-accent/5 transition-colors"
+                  className="hover:bg-accent/5 relative cursor-pointer transition-colors"
                 >
-                  <CardContent className="px-4 py-1 flex flex-col items-center gap-3">
+                  <CardContent className="flex flex-col items-center gap-3 px-4 py-1">
                     <button
                       onClick={(e) => handleFavoriteClick(e, food)}
-                      className="absolute top-2 right-2 p-1 hover:opacity-80 transition-opacity z-10"
+                      className="absolute top-2 right-2 z-10 p-1 transition-opacity hover:opacity-80"
                     >
                       <Star
-                        className={`w-4 h-4 ${
+                        className={`h-4 w-4 ${
                           food.favorite
                             ? "fill-orange-500 text-orange-500"
                             : "text-muted-foreground"
                         }`}
                       />
                     </button>
-                    <h3 className="text-base font-medium text-center mt-1">
+                    <h3 className="mt-1 text-center text-base font-medium">
                       {food.name}
                     </h3>
                     <span className="text-4xl">{food.icon}</span>
-                    <div className="flex items-center gap-4 w-full justify-center mt-auto pt-2">
+                    <div className="mt-auto flex w-full items-center justify-center gap-4 pt-2">
                       <div className="flex flex-col items-center">
                         <span className="text-sm font-bold">
                           {food.calories}
                         </span>
-                        <span className="text-xs text-muted-foreground">
+                        <span className="text-muted-foreground text-xs">
                           cal
                         </span>
                       </div>
@@ -193,7 +193,7 @@ export default function AddPage() {
                         <span className="text-sm font-bold">
                           {food.protein}
                         </span>
-                        <span className="text-xs text-muted-foreground">
+                        <span className="text-muted-foreground text-xs">
                           grams
                         </span>
                       </div>
@@ -206,7 +206,7 @@ export default function AddPage() {
         )}
 
         {/* Custom Food Button */}
-        <div className="sticky bottom-0 left-0 right-0 pt-4 bg-background border-t border-border/50 -mx-4 px-4 py-3">
+        <div className="border-border/30 dark:border-border/20 sticky right-0 bottom-0 left-0 z-10 -mx-4 border-t bg-transparent px-4 pt-4 pb-4 backdrop-blur-xs">
           <Button
             onClick={() => router.push("/add-meal/new")}
             className="w-full"
