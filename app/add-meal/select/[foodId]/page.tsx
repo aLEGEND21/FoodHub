@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter, useParams } from "next/navigation";
-import { getFoodById, createMeal } from "@/lib/actions/meals";
-import type { Food } from "@/types";
 import { Button } from "@/components/ui/button";
+import { createMeal, getFoodById } from "@/lib/actions/meals";
 import { cn } from "@/lib/utils";
+import type { Food } from "@/types";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 type MealTime = "breakfast" | "lunch" | "dinner" | "snack";
 type ServingSize = "1/4" | "1/3" | "1/2" | "2/3" | "3/4" | "1";
@@ -27,10 +27,10 @@ export default function SelectMealPage() {
   const [food, setFood] = useState<Food | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedMealTime, setSelectedMealTime] = useState<MealTime | null>(
-    null
+    null,
   );
   const [selectedServingSize, setSelectedServingSize] =
-    useState<ServingSize | null>(null);
+    useState<ServingSize>("1");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -116,16 +116,16 @@ export default function SelectMealPage() {
 
   if (loading) {
     return (
-      <main className="max-w-md mx-auto w-full px-4 pt-6 pb-20 md:pb-4">
-        <div className="text-center text-muted-foreground py-8">Loading...</div>
+      <main className="mx-auto w-full max-w-md px-4 pt-6 pb-20 md:pb-4">
+        <div className="text-muted-foreground py-8 text-center">Loading...</div>
       </main>
     );
   }
 
   if (error && !food) {
     return (
-      <main className="max-w-md mx-auto w-full px-4 pt-6 pb-20 md:pb-4">
-        <div className="text-center text-destructive py-8">{error}</div>
+      <main className="mx-auto w-full max-w-md px-4 pt-6 pb-20 md:pb-4">
+        <div className="text-destructive py-8 text-center">{error}</div>
         <Button onClick={() => router.push("/add-meal")} className="w-full">
           Go Back
         </Button>
@@ -140,16 +140,19 @@ export default function SelectMealPage() {
   const adjustedValues = calculateAdjustedValues(selectedServingSize);
 
   return (
-    <main className="max-w-md mx-auto w-full px-4 pt-6 space-y-6 pb-20 md:pb-4">
+    <main className="mx-auto w-full max-w-md space-y-6 px-5 pt-8 pb-20 md:pb-4">
       {/* Header */}
-      <div className="space-y-2">
-        <div className="flex items-center gap-3">
-          <span className="text-4xl">{food.icon}</span>
-          <div>
-            <h1 className="text-2xl font-bold">{food.name}</h1>
-            <p className="text-sm text-muted-foreground">
-              {food.calories} cal • {food.protein}g protein (per serving)
-            </p>
+      <div className="flex flex-col items-center gap-4">
+        <h1 className="text-2xl font-bold">{food.name}</h1>
+        <span className="text-4xl">{food.icon}</span>
+        <div className="flex w-full items-center justify-center gap-10">
+          <div className="flex flex-col items-center">
+            <span className="text-xl font-bold">{food.calories}</span>
+            <span className="text-muted-foreground text-sm">cal</span>
+          </div>
+          <div className="flex flex-col items-center">
+            <span className="text-xl font-bold">{food.protein}</span>
+            <span className="text-muted-foreground text-sm">g protein</span>
           </div>
         </div>
       </div>
@@ -166,9 +169,9 @@ export default function SelectMealPage() {
                 selectedMealTime === mealType.value ? "default" : "outline"
               }
               className={cn(
-                "h-20 flex flex-col items-center justify-center gap-2",
+                "flex h-20 flex-col items-center justify-center gap-2",
                 selectedMealTime === mealType.value &&
-                  "bg-primary text-primary-foreground"
+                  "bg-primary text-primary-foreground",
               )}
             >
               <span className="text-2xl">{mealType.emoji}</span>
@@ -188,9 +191,9 @@ export default function SelectMealPage() {
               onClick={() => setSelectedServingSize(size)}
               variant={selectedServingSize === size ? "default" : "outline"}
               className={cn(
-                "h-16 flex items-center justify-center",
+                "flex h-16 items-center justify-center",
                 selectedServingSize === size &&
-                  "bg-primary text-primary-foreground"
+                  "bg-primary text-primary-foreground",
               )}
             >
               <span className="text-lg font-semibold">{size}</span>
@@ -198,7 +201,7 @@ export default function SelectMealPage() {
           ))}
         </div>
         {selectedServingSize && (
-          <div className="text-sm text-muted-foreground text-center pt-2">
+          <div className="text-muted-foreground pt-2 text-center text-sm">
             {adjustedValues.calories} calories • {adjustedValues.protein}g
             protein
           </div>
@@ -207,13 +210,13 @@ export default function SelectMealPage() {
 
       {/* Error Message */}
       {error && (
-        <div className="text-sm text-destructive text-center bg-destructive/10 p-3 rounded-md">
+        <div className="text-destructive bg-destructive/10 rounded-md p-3 text-center text-sm">
           {error}
         </div>
       )}
 
       {/* Submit Button */}
-      <div className="sticky bottom-0 left-0 right-0 pt-4 bg-background border-t border-border/50 -mx-4 px-4 py-3">
+      <div className="bg-background border-border/50 sticky right-0 bottom-0 left-0 -mx-4 border-t px-4 py-3 pt-4">
         <Button
           onClick={handleSubmit}
           disabled={!selectedMealTime || !selectedServingSize || submitting}
