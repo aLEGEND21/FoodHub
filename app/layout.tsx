@@ -25,16 +25,16 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange={false}
         >
-          <div className="flex flex-col h-screen md:justify-center md:items-center md:h-auto md:bg-muted/30 dark:md:bg-background md:p-4">
+          <div className="md:bg-muted/30 dark:md:bg-background flex h-screen flex-col md:h-auto md:items-center md:justify-center md:p-4">
             <div
-              className="w-full h-full flex flex-col md:h-auto md:w-[390px] md:border md:border-border md:rounded-[2.5rem] md:overflow-hidden md:shadow-2xl md:relative md:max-h-[90vh]"
+              className="md:border-border flex h-full w-full flex-col md:relative md:h-auto md:max-h-[90vh] md:w-[390px] md:overflow-hidden md:rounded-[2.5rem] md:border md:shadow-2xl"
               style={{
                 aspectRatio: "390 / 844",
                 backgroundColor: "var(--background)",
               }}
             >
               <div
-                className="flex flex-col min-h-0 flex-1 overflow-y-auto pb-20 md:pb-0 md:scrollbar-hide"
+                className="md:scrollbar-hide flex min-h-0 flex-1 flex-col overflow-y-auto pb-17 md:pb-0"
                 style={{
                   backgroundColor: "var(--background)",
                 }}
