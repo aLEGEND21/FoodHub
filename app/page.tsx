@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import type { Meal, DailyStats } from "@/types";
 import { getTodayMeals, deleteMeal } from "@/lib/actions/meals";
+import { getTodayHabits, updateHabits } from "@/lib/actions/habits";
 import { CALORIE_GOAL, PROTEIN_GOAL } from "@/lib/constants";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -19,16 +20,23 @@ export default function HomePage() {
   const [expandedMeals, setExpandedMeals] = useState<Set<string>>(
     new Set(["breakfast", "lunch", "dinner", "snack"])
   );
-  const [workoutLevel, setWorkoutLevel] = useState(0);
+  const [workoutDone, setWorkoutDone] = useState(false);
   const [fruitsCount, setFruitsCount] = useState(0);
 
   useEffect(() => {
-    const fetchTodayMeals = async () => {
+    const fetchTodayData = async () => {
       const todayStats = await getTodayMeals();
       setTodayStats(todayStats);
       setAllMeals(todayStats.meals);
+
+      // Fetch today's habits
+      const todayHabits = await getTodayHabits();
+      if (todayHabits) {
+        setWorkoutDone(todayHabits.workoutDone);
+        setFruitsCount(todayHabits.fruitsCount);
+      }
     };
-    fetchTodayMeals();
+    fetchTodayData();
   }, []);
 
   const handleDeleteMeal = async (id: string) => {
@@ -51,36 +59,36 @@ export default function HomePage() {
     setExpandedMeals(newExpanded);
   };
 
-  const handleWorkoutClick = () => {
-    setWorkoutLevel((prev) => (prev + 1) % 4);
+  const handleWorkoutClick = async () => {
+    const newWorkoutDone = !workoutDone;
+    setWorkoutDone(newWorkoutDone);
+
+    // Save to database
+    const today = new Date().toISOString().split("T")[0];
+    await updateHabits(today, newWorkoutDone, fruitsCount);
   };
 
-  const handleFruitsClick = () => {
-    setFruitsCount((prev) => (prev + 1) % 6);
+  const handleFruitsClick = async () => {
+    const newFruitsCount = (fruitsCount + 1) % 3; // Cycle through 0, 1, 2
+    setFruitsCount(newFruitsCount);
+
+    // Save to database
+    const today = new Date().toISOString().split("T")[0];
+    await updateHabits(today, workoutDone, newFruitsCount);
   };
 
-  const workoutLabels = ["Not Started", "Warm Up", "In Progress", "Complete"];
-  const fruitsLabels = [
-    "None",
-    "1 Fruit",
-    "2 Fruits",
-    "3 Fruits",
-    "4 Fruits",
-    "5+ Fruits",
-  ];
+  const workoutLabel = workoutDone ? "Workout Done" : "Workout Not Done";
+  const fruitsLabels = ["None", "1 Fruit", "2 Fruits"];
 
   const getWorkoutColor = () => {
-    if (workoutLevel === 0) return "bg-muted hover:bg-muted/80";
-    if (workoutLevel === 1)
-      return "bg-blue-500/20 text-blue-700 dark:text-blue-300 hover:bg-blue-500/30";
-    if (workoutLevel === 2)
-      return "bg-yellow-500/20 text-yellow-700 dark:text-yellow-300 hover:bg-yellow-500/30";
-    return "bg-green-500/20 text-green-700 dark:text-green-300 hover:bg-green-500/30";
+    return workoutDone
+      ? "bg-green-500/20 text-green-700 dark:text-green-300 hover:bg-green-500/30"
+      : "bg-muted hover:bg-muted/80";
   };
 
   const getFruitColor = () => {
     if (fruitsCount === 0) return "bg-muted hover:bg-muted/80";
-    if (fruitsCount <= 2)
+    if (fruitsCount === 1)
       return "bg-orange-500/20 text-orange-700 dark:text-orange-300 hover:bg-orange-500/30";
     return "bg-green-500/20 text-green-700 dark:text-green-300 hover:bg-green-500/30";
   };
@@ -173,9 +181,7 @@ export default function HomePage() {
             variant="outline"
           >
             <Zap className="w-5 h-5" />
-            <span className="text-xs font-medium">
-              {workoutLabels[workoutLevel]}
-            </span>
+            <span className="text-xs font-medium">{workoutLabel}</span>
           </Button>
           <Button
             onClick={handleFruitsClick}

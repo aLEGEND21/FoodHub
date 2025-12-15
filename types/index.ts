@@ -1,6 +1,7 @@
 // Re-export all types for convenience
 export type { Food } from "./food";
 export type { Meal } from "./meal";
+export type { Habits } from "./habits";
 
 // Types without corresponding models
 export interface DailyStats {
@@ -8,10 +9,4 @@ export interface DailyStats {
   totalCalories: number;
   totalProtein: number;
   meals: Meal[];
-}
-
-export interface HabitState {
-  workoutLevel: number; // 0-3
-  mealGoalMet: boolean;
-  fruitsCount: number;
 }
