@@ -19,16 +19,35 @@ export default function HistoryPage() {
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr + "T00:00:00");
-    return date.toLocaleDateString("en-US", {
-      month: "2-digit",
-      day: "2-digit",
-      year: "numeric",
-    });
+    const dayName = date.toLocaleDateString("en-US", { weekday: "long" });
+    const monthName = date.toLocaleDateString("en-US", { month: "long" });
+    const day = date.getDate();
+
+    // Get ordinal suffix (st, nd, rd, th)
+    const getOrdinalSuffix = (n: number) => {
+      const s = ["th", "st", "nd", "rd"];
+      const v = n % 100;
+      return s[(v - 20) % 10] || s[v] || s[0];
+    };
+
+    return `${dayName}, ${monthName} ${day}${getOrdinalSuffix(day)}`;
+  };
+
+  const getWorkoutColor = (workoutDone: boolean) => {
+    return workoutDone
+      ? "bg-green-500 dark:bg-green-500/80"
+      : "bg-red-500 dark:bg-red-500/80";
+  };
+
+  const getFruitColor = (fruitsCount: number) => {
+    if (fruitsCount === 0) return "bg-red-500 dark:bg-red-500/80";
+    if (fruitsCount === 1) return "bg-yellow-500 dark:bg-yellow-500/80";
+    return "bg-green-500 dark:bg-green-500/80";
   };
 
   if (loading) {
     return (
-      <main className="max-w-md mx-auto w-full px-4 pt-6 pb-24 md:flex-1 md:overflow-y-auto md:scrollbar-hide md:pb-6">
+      <main className="md:scrollbar-hide mx-auto w-full max-w-md px-4 pt-6 pb-24 md:flex-1 md:overflow-y-auto md:pb-6">
         <div className="space-y-2">
           <h1 className="text-3xl font-bold">History</h1>
           <p className="text-muted-foreground">Loading...</p>
@@ -38,13 +57,13 @@ export default function HistoryPage() {
   }
 
   return (
-    <main className="max-w-md mx-auto w-full px-4 pt-6 space-y-4 pb-24 md:flex-1 md:overflow-y-auto md:scrollbar-hide md:pb-6">
+    <main className="md:scrollbar-hide mx-auto w-full max-w-md space-y-4 px-4 pt-6 pb-24 md:flex-1 md:overflow-y-auto md:pb-6">
       <div className="space-y-2">
         <h1 className="text-3xl font-bold">History</h1>
       </div>
 
       {historyStats.length === 0 ? (
-        <div className="text-center py-8">
+        <div className="py-8 text-center">
           <p className="text-muted-foreground">No meal history found</p>
         </div>
       ) : (
@@ -52,24 +71,54 @@ export default function HistoryPage() {
           {historyStats.map((dayStats) => (
             <div
               key={dayStats.date}
-              className="border border-black bg-white p-4 flex items-center justify-between rounded-none"
+              className="bg-card text-card-foreground rounded-lg border p-4"
             >
-              <div className="flex flex-col gap-1">
-                <span className="text-base font-bold">
-                  {formatDate(dayStats.date)}
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  {dayStats.meals.length}{" "}
-                  {dayStats.meals.length === 1 ? "meal" : "meals"}
-                </span>
-              </div>
-              <div className="flex flex-col items-end gap-1">
-                <span className="text-base font-bold">
-                  {dayStats.totalCalories} cal
-                </span>
-                <span className="text-base font-bold">
-                  {dayStats.totalProtein} g
-                </span>
+              <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-3">
+                  <span className="text-sm leading-none">
+                    {formatDate(dayStats.date)}
+                  </span>
+                  <div className="flex gap-4">
+                    <div className="flex items-center gap-2">
+                      <div
+                        className={`h-2.5 w-2.5 rounded-full ${getWorkoutColor(
+                          dayStats.workoutDone ?? false,
+                        )}`}
+                      />
+                      <span className="text-muted-foreground text-xs">
+                        Workout
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div
+                        className={`h-2.5 w-2.5 rounded-full ${getFruitColor(
+                          dayStats.fruitsCount ?? 0,
+                        )}`}
+                      />
+                      <span className="text-muted-foreground text-xs">
+                        Fruit
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4 leading-none">
+                  <span className="flex items-center gap-0.5">
+                    <span className="text-primary text-sm leading-none font-bold">
+                      {dayStats.totalCalories}
+                    </span>
+                    <span className="text-muted-foreground text-xs leading-none">
+                      cal
+                    </span>
+                  </span>
+                  <span className="flex items-center gap-0.5">
+                    <span className="text-primary text-sm leading-none font-bold">
+                      {dayStats.totalProtein}
+                    </span>
+                    <span className="text-muted-foreground text-xs leading-none">
+                      g
+                    </span>
+                  </span>
+                </div>
               </div>
             </div>
           ))}

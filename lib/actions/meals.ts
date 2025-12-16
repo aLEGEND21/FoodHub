@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import dbConnect from "@/lib/mongodb";
 import Food from "@/models/Food";
 import MealModel from "@/models/Meal";
+import HabitsModel from "@/models/Habits";
 import { revalidatePath } from "next/cache";
 import type { Food as FoodType, Meal, DailyStats } from "@/types";
 
@@ -417,6 +418,30 @@ export async function getHistoryMeals(): Promise<DailyStats[]> {
       mealsByDate.get(dateStr)!.push(formattedMeal);
     });
 
+    // Fetch all habits for the dates we have meals
+    const dateStrings = Array.from(mealsByDate.keys());
+    const habitDates = dateStrings.map((dateStr) => {
+      const [year, month, day] = dateStr.split("-").map(Number);
+      return new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
+    });
+
+    const habits = await HabitsModel.find({
+      date: { $in: habitDates },
+    });
+
+    // Create a map of date string to habits
+    const habitsByDate = new Map<
+      string,
+      { workoutDone: boolean; fruitsCount: number }
+    >();
+    habits.forEach((habit) => {
+      const dateStr = habit.date.toISOString().split("T")[0];
+      habitsByDate.set(dateStr, {
+        workoutDone: habit.workoutDone,
+        fruitsCount: habit.fruitsCount,
+      });
+    });
+
     // Convert to DailyStats array
     const historyStats: DailyStats[] = Array.from(mealsByDate.entries())
       .map(([date, meals]) => {
@@ -426,11 +451,15 @@ export async function getHistoryMeals(): Promise<DailyStats[]> {
         );
         const totalProtein = meals.reduce((sum, meal) => sum + meal.protein, 0);
 
+        const habitsData = habitsByDate.get(date);
+
         return {
           date,
           totalCalories,
           totalProtein,
           meals,
+          workoutDone: habitsData?.workoutDone ?? false,
+          fruitsCount: habitsData?.fruitsCount ?? 0,
         };
       })
       .sort((a, b) => b.date.localeCompare(a.date)); // Sort by date, newest first

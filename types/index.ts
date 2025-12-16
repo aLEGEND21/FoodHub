@@ -9,4 +9,6 @@ export interface DailyStats {
   totalCalories: number;
   totalProtein: number;
   meals: Meal[];
+  workoutDone?: boolean;
+  fruitsCount?: number; // 0, 1, or 2
 }
