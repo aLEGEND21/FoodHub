@@ -13,8 +13,8 @@ import { CALORIE_GOAL, PROTEIN_GOAL } from "@/lib/constants";
 import { getLocalDateString } from "@/lib/utils";
 import type { DailyStats, Meal } from "@/types";
 import { Apple, ChevronRight, Trash2, Zap } from "lucide-react";
-import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 interface DateViewProps {
   date: string; // YYYY-MM-DD format
@@ -112,7 +112,7 @@ export default function DateView({
 
   return (
     <>
-      <main className="md:scrollbar-hide bg-background mx-auto w-full max-w-md space-y-6 px-4 pt-6 md:flex-1 md:overflow-y-auto md:pb-6">
+      <main className="md:scrollbar-hide bg-background mx-auto w-full max-w-md space-y-4 px-4 pt-6 md:flex-1 md:overflow-y-auto">
         {/* Header */}
         <div className="space-y-2">
           <h1 className="text-foreground text-3xl font-bold">
@@ -328,9 +328,10 @@ export default function DateView({
           })}
         </div>
 
-        {/* Add Meal Button (if enabled) */}
-        {showAddMealButton && (
-          <div className="border-border/30 dark:border-border/20 bg-background sticky right-0 bottom-0 left-0 z-10 -mx-4 border-t px-4 pt-4 pb-4 backdrop-blur-xs">
+        {/* Add Meal Button (if enabled). Show an empty div otherwise since even when h-0, it takes up space and ensures
+        everything looks right. */}
+        {showAddMealButton ? (
+          <div className="border-border/30 dark:border-border/20 sticky right-0 bottom-0 left-0 z-10 -m-4 border-t bg-transparent p-4 backdrop-blur-xs">
             <Button
               onClick={() => router.push(`/add-meal?date=${date}`)}
               className="w-full"
@@ -339,6 +340,8 @@ export default function DateView({
               Add Meal
             </Button>
           </div>
+        ) : (
+          <div className="h-0" />
         )}
       </main>
     </>
