@@ -216,21 +216,24 @@ function getServingMultiplier(servingSize: string): number {
 
 export async function createMeal(
   input: CreateMealInput,
+  options?: { isToday?: boolean },
 ): Promise<CreateMealResult> {
+  // Validate input with Zod first
+  const validationResult = createMealSchema.safeParse(input);
+
+  if (!validationResult.success) {
+    const firstError = validationResult.error.issues[0];
+    return {
+      success: false,
+      message: firstError?.message || "Validation failed",
+    };
+  }
+
+  const validatedInput = validationResult.data;
+  const mealDateStr = validatedInput.date;
+  const isToday = options?.isToday ?? false;
+
   try {
-    // Validate input with Zod
-    const validationResult = createMealSchema.safeParse(input);
-
-    if (!validationResult.success) {
-      const firstError = validationResult.error.issues[0];
-      return {
-        success: false,
-        message: firstError?.message || "Validation failed",
-      };
-    }
-
-    const validatedInput = validationResult.data;
-
     // Connect to database
     await dbConnect();
 
@@ -268,6 +271,7 @@ export async function createMeal(
     // Revalidate relevant paths
     revalidatePath("/add-meal");
     revalidatePath("/");
+    revalidatePath(`/history/${validatedInput.date}`);
   } catch (error) {
     console.error("Error creating meal:", error);
     return {
@@ -280,7 +284,14 @@ export async function createMeal(
   }
 
   // Redirect on success - this happens server-side
-  redirect("/add-meal");
+  // Redirect to home if the meal is for today, otherwise to history page for that date
+  // isToday is determined on the client side where we know the user's timezone
+  // This is outside try-catch so NEXT_REDIRECT errors are not caught
+  if (isToday) {
+    redirect("/");
+  } else {
+    redirect(`/history/${mealDateStr}`);
+  }
 }
 
 export async function getFoodById(foodId: string): Promise<FoodType | null> {
@@ -304,21 +315,21 @@ export async function getFoodById(foodId: string): Promise<FoodType | null> {
   }
 }
 
-export async function getTodayMeals(): Promise<DailyStats> {
+export async function getMealsByDate(date: string): Promise<DailyStats> {
   try {
     await dbConnect();
 
-    // Get today's date range (start and end of day) in UTC
-    const today = new Date();
-    today.setUTCHours(0, 0, 0, 0);
-    const tomorrow = new Date(today);
-    tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
+    // Parse date string (YYYY-MM-DD) and create Date object at start of day in UTC
+    const [year, month, day] = date.split("-").map(Number);
+    const targetDate = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
+    const nextDate = new Date(targetDate);
+    nextDate.setUTCDate(nextDate.getUTCDate() + 1);
 
-    // Fetch all meals for today
+    // Fetch all meals for the specified date
     const meals = await MealModel.find({
       date: {
-        $gte: today,
-        $lt: tomorrow,
+        $gte: targetDate,
+        $lt: nextDate,
       },
     }).sort({ mealTime: 1, name: 1 });
 
@@ -346,17 +357,16 @@ export async function getTodayMeals(): Promise<DailyStats> {
     );
 
     return {
-      date: today.toISOString().split("T")[0],
+      date,
       totalCalories,
       totalProtein,
       meals: formattedMeals,
     };
   } catch (error) {
-    console.error("Error fetching today's meals:", error);
+    console.error("Error fetching meals by date:", error);
     // Return empty stats on error
-    const today = new Date().toISOString().split("T")[0];
     return {
-      date: today,
+      date,
       totalCalories: 0,
       totalProtein: 0,
       meals: [],

@@ -1,17 +1,23 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import type { DailyStats } from "@/types";
 import { getHistoryMeals } from "@/lib/actions/meals";
+import { getLocalDateString } from "@/lib/utils";
 
 export default function HistoryPage() {
+  const router = useRouter();
   const [historyStats, setHistoryStats] = useState<DailyStats[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchHistory = async () => {
       const stats = await getHistoryMeals();
-      setHistoryStats(stats);
+      // Filter out today's date from history (it's shown on the home page)
+      const today = getLocalDateString();
+      const filteredStats = stats.filter((stat) => stat.date !== today);
+      setHistoryStats(filteredStats);
       setLoading(false);
     };
     fetchHistory();
@@ -71,7 +77,8 @@ export default function HistoryPage() {
           {historyStats.map((dayStats) => (
             <div
               key={dayStats.date}
-              className="bg-card text-card-foreground rounded-lg border p-4"
+              onClick={() => router.push(`/history/${dayStats.date}`)}
+              className="bg-card text-card-foreground hover:bg-accent/5 cursor-pointer rounded-lg border p-4 transition-colors"
             >
               <div className="flex items-center justify-between">
                 <div className="flex flex-col gap-3">

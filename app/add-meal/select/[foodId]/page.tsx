@@ -2,9 +2,9 @@
 
 import { Button } from "@/components/ui/button";
 import { createMeal, getFoodById } from "@/lib/actions/meals";
-import { cn } from "@/lib/utils";
+import { cn, getLocalDateString } from "@/lib/utils";
 import type { Food } from "@/types";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 type MealTime = "breakfast" | "lunch" | "dinner" | "snack";
@@ -22,7 +22,9 @@ const SERVING_SIZES: ServingSize[] = ["1/4", "1/3", "1/2", "2/3", "3/4", "1"];
 export default function SelectMealPage() {
   const router = useRouter();
   const params = useParams();
+  const searchParams = useSearchParams();
   const foodId = params.foodId as string;
+  const dateParam = searchParams.get("date");
 
   const [food, setFood] = useState<Food | null>(null);
   const [loading, setLoading] = useState(true);
@@ -63,19 +65,20 @@ export default function SelectMealPage() {
     setError(null);
 
     try {
-      // Get today's date in YYYY-MM-DD format using the user's local timezone
-      const now = new Date();
-      const year = now.getFullYear();
-      const month = String(now.getMonth() + 1).padStart(2, "0");
-      const day = String(now.getDate()).padStart(2, "0");
-      const today = `${year}-${month}-${day}`;
+      // Use date from query param if available, otherwise use today
+      const targetDate = dateParam || getLocalDateString();
+      const today = getLocalDateString();
+      const isToday = targetDate === today;
 
-      const result = await createMeal({
-        foodId,
-        mealTime: selectedMealTime,
-        servingSize: selectedServingSize,
-        date: today,
-      });
+      const result = await createMeal(
+        {
+          foodId,
+          mealTime: selectedMealTime,
+          servingSize: selectedServingSize,
+          date: targetDate,
+        },
+        { isToday },
+      );
 
       // If we get here, there was an error (success redirects server-side)
       if (result && !result.success) {

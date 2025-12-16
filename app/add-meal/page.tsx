@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import type { Food } from "@/types";
 import {
   getFoods,
@@ -15,6 +15,8 @@ import { Star } from "lucide-react";
 
 export default function AddPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const dateParam = searchParams.get("date");
   const [search, setSearch] = useState("");
   const [foods, setFoods] = useState<GetFoodsResult>({
     favoriteFoods: [],
@@ -53,7 +55,10 @@ export default function AddPage() {
 
   const handleFoodSelected = (food: Food) => {
     // Navigate to selection page where user can choose meal type and serving size
-    router.push(`/add-meal/select/${food.id}`);
+    const url = dateParam
+      ? `/add-meal/select/${food.id}?date=${dateParam}`
+      : `/add-meal/select/${food.id}`;
+    router.push(url);
   };
 
   const handleFavoriteClick = async (
@@ -264,7 +269,12 @@ export default function AddPage() {
         {/* Custom Food Button */}
         <div className="border-border/30 dark:border-border/20 sticky right-0 bottom-0 left-0 z-10 -mx-4 border-t bg-transparent px-4 pt-4 pb-4 backdrop-blur-xs">
           <Button
-            onClick={() => router.push("/add-meal/new")}
+            onClick={() => {
+              const url = dateParam
+                ? `/add-meal/new?date=${dateParam}`
+                : "/add-meal/new";
+              router.push(url);
+            }}
             className="w-full"
             size="lg"
           >
