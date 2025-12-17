@@ -480,3 +480,103 @@ export async function getHistoryMeals(): Promise<DailyStats[]> {
     return [];
   }
 }
+
+export async function getTrendsStatsLast14Days(): Promise<DailyStats[]> {
+  try {
+    await dbConnect();
+
+    const today = new Date();
+    today.setUTCHours(0, 0, 0, 0);
+
+    const startDate = new Date(today);
+    startDate.setUTCDate(startDate.getUTCDate() - 13);
+
+    const endExclusive = new Date(today);
+    endExclusive.setUTCDate(endExclusive.getUTCDate() + 1);
+
+    const meals = await MealModel.find({
+      date: {
+        $gte: startDate,
+        $lt: endExclusive,
+      },
+    }).sort({ date: 1, mealTime: 1, name: 1 });
+
+    const mealsByDate = new Map<string, Meal[]>();
+
+    meals.forEach((meal) => {
+      const dateStr = meal.date.toISOString().split("T")[0];
+
+      if (!mealsByDate.has(dateStr)) {
+        mealsByDate.set(dateStr, []);
+      }
+
+      const formattedMeal: Meal = {
+        id: meal._id.toString(),
+        name: meal.name,
+        calories: meal.calories,
+        protein: meal.protein,
+        icon: meal.icon,
+        servingSize: meal.servingSize as Meal["servingSize"],
+        mealTime: meal.mealTime as Meal["mealTime"],
+        foodId: meal.foodId.toString(),
+        date: meal.date,
+      };
+
+      mealsByDate.get(dateStr)!.push(formattedMeal);
+    });
+
+    const habits = await HabitsModel.find({
+      date: {
+        $gte: startDate,
+        $lt: endExclusive,
+      },
+    });
+
+    const habitsByDate = new Map<
+      string,
+      { workoutDone: boolean; fruitsCount: number }
+    >();
+
+    habits.forEach((habit) => {
+      const dateStr = habit.date.toISOString().split("T")[0];
+      habitsByDate.set(dateStr, {
+        workoutDone: habit.workoutDone,
+        fruitsCount: habit.fruitsCount,
+      });
+    });
+
+    const trends: DailyStats[] = [];
+
+    for (let i = 0; i < 14; i++) {
+      const date = new Date(startDate);
+      date.setUTCDate(startDate.getUTCDate() + i);
+      const dateStr = date.toISOString().split("T")[0];
+
+      const dayMeals = mealsByDate.get(dateStr) ?? [];
+      const totalCalories = dayMeals.reduce(
+        (sum, meal) => sum + meal.calories,
+        0,
+      );
+      const totalProtein = dayMeals.reduce(
+        (sum, meal) => sum + meal.protein,
+        0,
+      );
+
+      const habitsData = habitsByDate.get(dateStr);
+
+      trends.push({
+        date: dateStr,
+        totalCalories,
+        totalProtein,
+        meals: dayMeals,
+        workoutDone: habitsData?.workoutDone ?? false,
+        fruitsCount: habitsData?.fruitsCount ?? 0,
+      });
+    }
+
+    return trends;
+  } catch (error) {
+    console.error("Error fetching 14-day trends stats:", error);
+    return [];
+  }
+}
