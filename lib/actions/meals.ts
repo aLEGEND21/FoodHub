@@ -8,6 +8,7 @@ import MealModel from "@/models/Meal";
 import HabitsModel from "@/models/Habits";
 import { revalidatePath } from "next/cache";
 import type { Food as FoodType, Meal, DailyStats } from "@/types";
+import { dateStringToEST, getTodayEST, estDateToString } from "@/lib/utils";
 
 // Zod schema for food validation
 const createFoodSchema = z.object({
@@ -251,10 +252,9 @@ export async function createMeal(
     const adjustedCalories = Math.round(food.calories * multiplier);
     const adjustedProtein = Math.round(food.protein * multiplier);
 
-    // Parse date string (YYYY-MM-DD) and create Date object at start of day in UTC
-    // This ensures consistent date storage regardless of server timezone
-    const [year, month, day] = validatedInput.date.split("-").map(Number);
-    const mealDate = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
+    // Parse date string (YYYY-MM-DD) and create Date object at start of day in EST/EDT
+    // This ensures consistent date storage based on EST timezone
+    const mealDate = dateStringToEST(validatedInput.date);
 
     // Create new meal
     await MealModel.create({
@@ -319,9 +319,8 @@ export async function getMealsByDate(date: string): Promise<DailyStats> {
   try {
     await dbConnect();
 
-    // Parse date string (YYYY-MM-DD) and create Date object at start of day in UTC
-    const [year, month, day] = date.split("-").map(Number);
-    const targetDate = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
+    // Parse date string (YYYY-MM-DD) and create Date object at start of day in EST/EDT
+    const targetDate = dateStringToEST(date);
     const nextDate = new Date(targetDate);
     nextDate.setUTCDate(nextDate.getUTCDate() + 1);
 
@@ -406,8 +405,8 @@ export async function getHistoryMeals(): Promise<DailyStats[]> {
     const mealsByDate = new Map<string, Meal[]>();
 
     meals.forEach((meal) => {
-      // Convert date to YYYY-MM-DD format for grouping
-      const dateStr = meal.date.toISOString().split("T")[0];
+      // Convert date to YYYY-MM-DD format for grouping (from EST)
+      const dateStr = estDateToString(meal.date);
 
       if (!mealsByDate.has(dateStr)) {
         mealsByDate.set(dateStr, []);
@@ -430,10 +429,7 @@ export async function getHistoryMeals(): Promise<DailyStats[]> {
 
     // Fetch all habits for the dates we have meals
     const dateStrings = Array.from(mealsByDate.keys());
-    const habitDates = dateStrings.map((dateStr) => {
-      const [year, month, day] = dateStr.split("-").map(Number);
-      return new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
-    });
+    const habitDates = dateStrings.map((dateStr) => dateStringToEST(dateStr));
 
     const habits = await HabitsModel.find({
       date: { $in: habitDates },
@@ -445,7 +441,7 @@ export async function getHistoryMeals(): Promise<DailyStats[]> {
       { workoutDone: boolean; fruitsCount: number }
     >();
     habits.forEach((habit) => {
-      const dateStr = habit.date.toISOString().split("T")[0];
+      const dateStr = estDateToString(habit.date);
       habitsByDate.set(dateStr, {
         workoutDone: habit.workoutDone,
         fruitsCount: habit.fruitsCount,
@@ -485,8 +481,9 @@ export async function getTrendsStatsLast14Days(): Promise<DailyStats[]> {
   try {
     await dbConnect();
 
-    const today = new Date();
-    today.setUTCHours(0, 0, 0, 0);
+    // Get today's date in EST
+    const todayEST = getTodayEST();
+    const today = dateStringToEST(todayEST);
 
     const startDate = new Date(today);
     startDate.setUTCDate(startDate.getUTCDate() - 13);
@@ -504,7 +501,7 @@ export async function getTrendsStatsLast14Days(): Promise<DailyStats[]> {
     const mealsByDate = new Map<string, Meal[]>();
 
     meals.forEach((meal) => {
-      const dateStr = meal.date.toISOString().split("T")[0];
+      const dateStr = estDateToString(meal.date);
 
       if (!mealsByDate.has(dateStr)) {
         mealsByDate.set(dateStr, []);
@@ -538,7 +535,7 @@ export async function getTrendsStatsLast14Days(): Promise<DailyStats[]> {
     >();
 
     habits.forEach((habit) => {
-      const dateStr = habit.date.toISOString().split("T")[0];
+      const dateStr = estDateToString(habit.date);
       habitsByDate.set(dateStr, {
         workoutDone: habit.workoutDone,
         fruitsCount: habit.fruitsCount,
@@ -550,7 +547,8 @@ export async function getTrendsStatsLast14Days(): Promise<DailyStats[]> {
     for (let i = 0; i < 14; i++) {
       const date = new Date(startDate);
       date.setUTCDate(startDate.getUTCDate() + i);
-      const dateStr = date.toISOString().split("T")[0];
+      // Convert UTC date back to EST date string
+      const dateStr = estDateToString(date);
 
       const dayMeals = mealsByDate.get(dateStr) ?? [];
       const totalCalories = dayMeals.reduce(

@@ -10,7 +10,7 @@ import {
 import { getHabitsByDate, updateHabits } from "@/lib/actions/habits";
 import { deleteMeal, getMealsByDate } from "@/lib/actions/meals";
 import { CALORIE_GOAL, PROTEIN_GOAL } from "@/lib/constants";
-import { getLocalDateString } from "@/lib/utils";
+import { getLocalDateString, dateStringToEST } from "@/lib/utils";
 import type { DailyStats, Meal } from "@/types";
 import { Apple, ChevronRight, Trash2, Zap } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -119,10 +119,11 @@ export default function DateView({
             {isToday ? "Today" : "History"}
           </h1>
           <p className="text-muted-foreground">
-            {new Date(date + "T00:00:00").toLocaleDateString([], {
+            {dateStringToEST(date).toLocaleDateString([], {
               weekday: "long",
               month: "short",
               day: "numeric",
+              timeZone: "UTC",
             })}
           </p>
         </div>

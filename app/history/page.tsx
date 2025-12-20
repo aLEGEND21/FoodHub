@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import type { DailyStats } from "@/types";
 import { getHistoryMeals } from "@/lib/actions/meals";
-import { getLocalDateString } from "@/lib/utils";
+import { getLocalDateString, dateStringToEST } from "@/lib/utils";
 
 export default function HistoryPage() {
   const router = useRouter();
@@ -24,10 +24,16 @@ export default function HistoryPage() {
   }, []);
 
   const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr + "T00:00:00");
-    const dayName = date.toLocaleDateString("en-US", { weekday: "long" });
-    const monthName = date.toLocaleDateString("en-US", { month: "long" });
-    const day = date.getDate();
+    const date = dateStringToEST(dateStr);
+    const dayName = date.toLocaleDateString("en-US", {
+      weekday: "short",
+      timeZone: "UTC",
+    });
+    const monthName = date.toLocaleDateString("en-US", {
+      month: "short",
+      timeZone: "UTC",
+    });
+    const day = date.getUTCDate();
 
     // Get ordinal suffix (st, nd, rd, th)
     const getOrdinalSuffix = (n: number) => {

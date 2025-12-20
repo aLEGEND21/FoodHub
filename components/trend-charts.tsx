@@ -24,13 +24,29 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { dateStringToEST } from "@/lib/utils";
 
-function formatDateLabel(dateStr: string) {
-  const [year, month, day] = dateStr.split("-").map(Number);
-  const date = new Date(Date.UTC(year, month - 1, day));
+/**
+ * Format a YYYY-MM-DD date string for display
+ * Uses the date utility to ensure consistent EST date handling
+ */
+function formatDateLabel(dateStr: string): string {
+  const date = dateStringToEST(dateStr);
   return date.toLocaleDateString(undefined, {
     month: "short",
     day: "numeric",
+    timeZone: "UTC",
+  });
+}
+
+/**
+ * Get the weekday label for a YYYY-MM-DD date string
+ */
+function getWeekdayLabel(dateStr: string): string {
+  const date = dateStringToEST(dateStr);
+  return date.toLocaleDateString(undefined, {
+    weekday: "short",
+    timeZone: "UTC",
   });
 }
 
@@ -354,11 +370,7 @@ export function TrendHeatmapChart({
               )}
               <div className="flex gap-1.5">
                 {data.map((point, index) => {
-                  const [year, month, day] = point.date.split("-").map(Number);
-                  const date = new Date(Date.UTC(year, month - 1, day));
-                  const dayLabel = date.toLocaleDateString(undefined, {
-                    weekday: "short",
-                  });
+                  const dayLabel = getWeekdayLabel(point.date);
 
                   return (
                     <div
