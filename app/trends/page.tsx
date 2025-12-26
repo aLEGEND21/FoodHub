@@ -5,7 +5,6 @@ import {
 } from "@/components/trend-charts";
 import { getTrendsStatsLast14Days } from "@/lib/actions/meals";
 import { CALORIE_GOAL, PROTEIN_GOAL } from "@/lib/constants";
-import { getTodayEST } from "@/lib/utils";
 
 export default async function TrendsPage() {
   const stats = await getTrendsStatsLast14Days();
@@ -29,8 +28,6 @@ export default async function TrendsPage() {
     date: day.date,
     done: day.workoutDone ?? false,
   }));
-
-  console.log(getTodayEST());
 
   return (
     <main className="md:scrollbar-hide mx-auto w-full max-w-md px-4 py-6 md:flex-1 md:overflow-y-auto md:pb-6">

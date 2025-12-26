@@ -20,6 +20,10 @@ const MealSchema = new mongoose.Schema({
     type: Date,
     required: true,
   },
+  userId: { type: String, required: true, index: true },
 });
+
+// Compound index for efficient queries by user and date
+MealSchema.index({ userId: 1, date: 1 });
 
 export default mongoose.models.Meal || mongoose.model("Meal", MealSchema);

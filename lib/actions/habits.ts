@@ -4,7 +4,7 @@ import dbConnect from "@/lib/mongodb";
 import HabitsModel from "@/models/Habits";
 import { revalidatePath } from "next/cache";
 import type { Habits } from "@/types";
-import { dateStringToEST, getTodayEST } from "@/lib/utils";
+import { dateStringToEST, getTodayEST, getCurrentUserId } from "@/lib/utils";
 
 export interface UpdateHabitsResult {
   success: boolean;
@@ -17,6 +17,9 @@ export async function updateHabits(
   fruitsCount: number, // 0, 1, or 2
 ): Promise<UpdateHabitsResult> {
   try {
+    // Get current user ID
+    const userId = await getCurrentUserId();
+
     await dbConnect();
 
     // Validate fruitsCount
@@ -30,10 +33,11 @@ export async function updateHabits(
     // Parse date string (YYYY-MM-DD) and create Date object at start of day in EST/EDT
     const habitDate = dateStringToEST(date);
 
-    // Use upsert to create or update habits for the date
+    // Use upsert to create or update habits for the date and user
     await HabitsModel.findOneAndUpdate(
-      { date: habitDate },
+      { userId, date: habitDate },
       {
+        userId,
         date: habitDate,
         workoutDone,
         fruitsCount,
@@ -60,12 +64,15 @@ export async function updateHabits(
 
 export async function getHabitsByDate(date: string): Promise<Habits | null> {
   try {
+    // Get current user ID
+    const userId = await getCurrentUserId();
+
     await dbConnect();
 
     // Parse date string (YYYY-MM-DD) and create Date object at start of day in EST/EDT
     const habitDate = dateStringToEST(date);
 
-    const habits = await HabitsModel.findOne({ date: habitDate });
+    const habits = await HabitsModel.findOne({ userId, date: habitDate });
 
     if (!habits) {
       return null;

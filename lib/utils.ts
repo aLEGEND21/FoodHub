@@ -1,8 +1,21 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { auth } from "@/auth";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
+}
+
+/**
+ * Get the current user ID (email) from the auth session
+ * Throws an error if user is not authenticated
+ */
+export async function getCurrentUserId(): Promise<string> {
+  const session = await auth();
+  if (!session?.user?.email) {
+    throw new Error("User not authenticated");
+  }
+  return session.user.email;
 }
 
 /**

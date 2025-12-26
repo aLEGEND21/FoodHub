@@ -8,7 +8,12 @@ import MealModel from "@/models/Meal";
 import HabitsModel from "@/models/Habits";
 import { revalidatePath } from "next/cache";
 import type { Food as FoodType, Meal, DailyStats } from "@/types";
-import { dateStringToEST, getTodayEST, estDateToString } from "@/lib/utils";
+import {
+  dateStringToEST,
+  getTodayEST,
+  estDateToString,
+  getCurrentUserId,
+} from "@/lib/utils";
 
 // Zod schema for food validation
 const createFoodSchema = z.object({
@@ -61,11 +66,15 @@ export async function createFood(
 
     const validatedInput = validationResult.data;
 
+    // Get current user ID
+    const userId = await getCurrentUserId();
+
     // Connect to database
     await dbConnect();
 
-    // Check if food with same name already exists
+    // Check if food with same name already exists for this user
     const existingFood = await Food.findOne({
+      userId,
       name: validatedInput.name,
     });
 
@@ -83,6 +92,7 @@ export async function createFood(
       protein: validatedInput.protein,
       icon: validatedInput.emoji,
       favorite: false,
+      userId,
     });
   } catch (error) {
     console.error("Error creating food:", error);
@@ -109,11 +119,18 @@ export interface GetFoodsResult {
 
 export async function getFoods(): Promise<GetFoodsResult> {
   try {
+    // Get current user ID
+    const userId = await getCurrentUserId();
+
     await dbConnect();
 
-    // Fetch foods from database
-    let favoriteFoods = await Food.find({ favorite: true }).sort({ name: 1 });
-    let regularFoods = await Food.find({ favorite: false }).sort({ name: 1 });
+    // Fetch foods from database for this user
+    let favoriteFoods = await Food.find({ userId, favorite: true }).sort({
+      name: 1,
+    });
+    let regularFoods = await Food.find({ userId, favorite: false }).sort({
+      name: 1,
+    });
 
     // Reformat fields to match Food type
     const formattedFavoriteFoods: FoodType[] = favoriteFoods.map((food) => ({
@@ -153,9 +170,12 @@ export async function toggleFoodFavorite(
   favorite: boolean,
 ): Promise<ToggleFoodFavoriteResult> {
   try {
+    // Get current user ID
+    const userId = await getCurrentUserId();
+
     await dbConnect();
 
-    const food = await Food.findById(foodId);
+    const food = await Food.findOne({ _id: foodId, userId });
     if (!food) {
       return {
         success: false,
@@ -235,11 +255,17 @@ export async function createMeal(
   const isToday = options?.isToday ?? false;
 
   try {
+    // Get current user ID
+    const userId = await getCurrentUserId();
+
     // Connect to database
     await dbConnect();
 
-    // Fetch the food to get base nutritional values
-    const food = await Food.findById(validatedInput.foodId);
+    // Fetch the food to get base nutritional values (must belong to user)
+    const food = await Food.findOne({
+      _id: validatedInput.foodId,
+      userId,
+    });
     if (!food) {
       return {
         success: false,
@@ -266,6 +292,7 @@ export async function createMeal(
       mealTime: validatedInput.mealTime,
       foodId: validatedInput.foodId,
       date: mealDate,
+      userId,
     });
 
     // Revalidate relevant paths
@@ -296,8 +323,11 @@ export async function createMeal(
 
 export async function getFoodById(foodId: string): Promise<FoodType | null> {
   try {
+    // Get current user ID
+    const userId = await getCurrentUserId();
+
     await dbConnect();
-    const food = await Food.findById(foodId);
+    const food = await Food.findOne({ _id: foodId, userId });
     if (!food) {
       return null;
     }
@@ -317,6 +347,9 @@ export async function getFoodById(foodId: string): Promise<FoodType | null> {
 
 export async function getMealsByDate(date: string): Promise<DailyStats> {
   try {
+    // Get current user ID
+    const userId = await getCurrentUserId();
+
     await dbConnect();
 
     // Parse date string (YYYY-MM-DD) and create Date object at start of day in EST/EDT
@@ -324,8 +357,9 @@ export async function getMealsByDate(date: string): Promise<DailyStats> {
     const nextDate = new Date(targetDate);
     nextDate.setUTCDate(nextDate.getUTCDate() + 1);
 
-    // Fetch all meals for the specified date
+    // Fetch all meals for the specified date and user
     const meals = await MealModel.find({
+      userId,
       date: {
         $gte: targetDate,
         $lt: nextDate,
@@ -377,7 +411,17 @@ export async function deleteMeal(
   mealId: string,
 ): Promise<{ success: boolean; message?: string }> {
   try {
+    // Get current user ID
+    const userId = await getCurrentUserId();
+
     await dbConnect();
+    const meal = await MealModel.findOne({ _id: mealId, userId });
+    if (!meal) {
+      return {
+        success: false,
+        message: "Meal not found",
+      };
+    }
     await MealModel.findByIdAndDelete(mealId);
     revalidatePath("/");
     return { success: true };
@@ -392,10 +436,13 @@ export async function deleteMeal(
 
 export async function getHistoryMeals(): Promise<DailyStats[]> {
   try {
+    // Get current user ID
+    const userId = await getCurrentUserId();
+
     await dbConnect();
 
-    // Fetch all meals, sorted by date (newest first)
-    const meals = await MealModel.find({}).sort({
+    // Fetch all meals for this user, sorted by date (newest first)
+    const meals = await MealModel.find({ userId }).sort({
       date: -1,
       mealTime: 1,
       name: 1,
@@ -432,6 +479,7 @@ export async function getHistoryMeals(): Promise<DailyStats[]> {
     const habitDates = dateStrings.map((dateStr) => dateStringToEST(dateStr));
 
     const habits = await HabitsModel.find({
+      userId,
       date: { $in: habitDates },
     });
 
@@ -479,6 +527,9 @@ export async function getHistoryMeals(): Promise<DailyStats[]> {
 
 export async function getTrendsStatsLast14Days(): Promise<DailyStats[]> {
   try {
+    // Get current user ID
+    const userId = await getCurrentUserId();
+
     await dbConnect();
 
     // Get today's date in EST
@@ -492,6 +543,7 @@ export async function getTrendsStatsLast14Days(): Promise<DailyStats[]> {
     endExclusive.setUTCDate(endExclusive.getUTCDate() + 1);
 
     const meals = await MealModel.find({
+      userId,
       date: {
         $gte: startDate,
         $lt: endExclusive,
@@ -523,6 +575,7 @@ export async function getTrendsStatsLast14Days(): Promise<DailyStats[]> {
     });
 
     const habits = await HabitsModel.find({
+      userId,
       date: {
         $gte: startDate,
         $lt: endExclusive,

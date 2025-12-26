@@ -4,7 +4,6 @@ const HabitsSchema = new mongoose.Schema({
   date: {
     type: Date,
     required: true,
-    unique: true, // Ensure only one document per date
   },
   workoutDone: {
     type: Boolean,
@@ -18,6 +17,10 @@ const HabitsSchema = new mongoose.Schema({
     min: 0,
     max: 2, // 0, 1, or 2 fruits
   },
+  userId: { type: String, required: true, index: true },
 });
+
+// Compound unique index to ensure only one habits document per user per date
+HabitsSchema.index({ userId: 1, date: 1 }, { unique: true });
 
 export default mongoose.models.Habits || mongoose.model("Habits", HabitsSchema);
