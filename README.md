@@ -38,6 +38,13 @@ FoodHub is a modern food tracking application that helps you monitor your daily 
 - **Daily Summaries**: See calories, protein, and habits for any past day
 - **Detailed Views**: Expand meal sections to see individual items and their nutritional values
 
+### 🔐 Authentication & Security
+
+- **Google OAuth**: Secure authentication using Google Sign-In
+- **Protected Routes**: All application pages require authentication
+- **Session Management**: Automatic session handling with NextAuth.js
+- **Secure Redirects**: Seamless redirect to login page for unauthenticated users
+
 ### 🎨 User Experience
 
 - **Mobile-First Design**: Optimized for mobile devices with a responsive layout
@@ -48,6 +55,7 @@ FoodHub is a modern food tracking application that helps you monitor your daily 
 ## Tech Stack
 
 - **Framework**: [Next.js 16](https://nextjs.org/) with App Router
+- **Authentication**: [NextAuth.js v5](https://authjs.dev/) with Google OAuth
 - **Database**: [MongoDB](https://www.mongodb.com/) with [Mongoose](https://mongoosejs.com/)
 - **Language**: [TypeScript](https://www.typescriptlang.org/)
 - **Styling**: [Tailwind CSS](https://tailwindcss.com/)
@@ -82,13 +90,26 @@ yarn install
 pnpm install
 ```
 
-3. Set up your MongoDB connection:
-   - Create a `.env.local` file in the root directory
-   - Add your MongoDB connection string:
+3. Set up environment variables:
+   - Copy over `.env.template` to a new `.env.local` file and replace all placeholders with your actual environment variables
 
+   **Getting Google OAuth Credentials:**
+   1. Go to the [Google Cloud Console](https://console.cloud.google.com/)
+   2. Create a new project or select an existing one
+   3. Enable the Google+ API
+   4. Navigate to "Credentials" → "Create Credentials" → "OAuth 2.0 Client ID"
+   5. Set the application type to "Web application"
+   6. Add authorized redirect URI: `http://localhost:3000/api/auth/callback/google` (for development)
+   7. Copy the Client ID and Client Secret to your `.env.local` file
+
+   **Generating Auth Secret:**
+   You can generate a secure random string for `AUTH_SECRET` using:
+
+   ```bash
+   npx auth secret
    ```
-   MONGODB_URI=your_mongodb_connection_string
-   ```
+
+   Or use any secure random string generator.
 
 4. Run the development server:
 
@@ -104,15 +125,22 @@ bun dev
 
 5. Open [http://localhost:3000](http://localhost:3000) in your browser to see the application.
 
+6. **First-time Access:**
+   - You will be redirected to the Google Sign-In page
+   - Sign in with your Google account
+   - After authentication, you'll be redirected back to the application
+
 ## Project Structure
 
 ```
 foodhub/
 ├── app/                    # Next.js app router pages
 │   ├── add-meal/           # Meal addition flow
+│   ├── api/                # API routes
+│   │   └── auth/           # NextAuth authentication routes
 │   ├── history/            # Meal history pages
-│   └── page.tsx            # Home page (today's view)
-├── components/              # React components
+│   └── page.tsx              # Home page (today's view)
+├── components/             # React components
 │   ├── ui/                 # Reusable UI components
 │   ├── bottom-nav.tsx      # Bottom navigation
 │   └── date-view.tsx       # Daily meal view component
@@ -124,6 +152,8 @@ foodhub/
 │   ├── Food.ts             # Food model
 │   ├── Meal.ts             # Meal model
 │   └── Habits.ts           # Habits model
+├── auth.ts                 # NextAuth configuration
+├── proxy.ts                # Route protection middleware
 └── types/                  # TypeScript type definitions
 ```
 
