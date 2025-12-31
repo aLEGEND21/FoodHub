@@ -15,8 +15,9 @@ export function BottomNav() {
     { href: "/profile", label: "Profile", icon: User },
   ];
 
+  /* Intentionally offset the icons upwards to better display on mobile. This is what Instagram does. */
   return (
-    <nav className="bg-card border-border fixed right-0 bottom-0 left-0 mx-auto flex w-full max-w-md items-center justify-around border-t py-3 md:relative md:mx-0 md:mt-auto md:max-w-full md:shrink-0">
+    <nav className="bg-card border-border fixed right-0 bottom-0 left-0 mx-auto flex w-full max-w-md items-start justify-around border-t pt-3 pb-7 md:relative md:mx-0 md:mt-auto md:max-w-full md:shrink-0">
       {navItems.map(({ href, label, icon: Icon }) => {
         // For home route, only match exactly. For other routes, match if pathname starts with the href
         const isActive =
@@ -27,7 +28,7 @@ export function BottomNav() {
           <Link
             key={href}
             href={href}
-            className={`flex h-full flex-1 flex-col items-center justify-center gap-1 transition-colors ${
+            className={`flex h-full flex-1 flex-col items-center justify-start gap-1 transition-colors ${
               isActive ? "text-primary" : "text-muted-foreground"
             }`}
           >
