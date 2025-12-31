@@ -5,7 +5,7 @@ import { createMeal, getFoodById } from "@/lib/actions/meals";
 import { cn, getLocalDateString } from "@/lib/utils";
 import type { Food } from "@/types";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 
 type MealTime = "breakfast" | "lunch" | "dinner" | "snack";
 type ServingSize = "1/4" | "1/3" | "1/2" | "2/3" | "3/4" | "1";
@@ -40,7 +40,7 @@ function getMealTimeFromHour(): MealTime {
   }
 }
 
-export default function SelectMealPage() {
+function SelectMealPageContent() {
   const router = useRouter();
   const params = useParams();
   const searchParams = useSearchParams();
@@ -255,5 +255,21 @@ export default function SelectMealPage() {
         </Button>
       </div>
     </main>
+  );
+}
+
+export default function SelectMealPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="mx-auto w-full max-w-md px-4 pt-6 pb-20 md:pb-4">
+          <div className="text-muted-foreground py-8 text-center">
+            Loading...
+          </div>
+        </main>
+      }
+    >
+      <SelectMealPageContent />
+    </Suspense>
   );
 }

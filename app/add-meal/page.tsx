@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { Food } from "@/types";
 import {
@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Star } from "lucide-react";
 
-export default function AddPage() {
+function AddPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const dateParam = searchParams.get("date");
@@ -283,5 +283,21 @@ export default function AddPage() {
         </div>
       </main>
     </>
+  );
+}
+
+export default function AddPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="mx-auto w-full max-w-md space-y-4 px-4 pt-6">
+          <div className="text-muted-foreground py-8 text-center">
+            Loading...
+          </div>
+        </main>
+      }
+    >
+      <AddPageContent />
+    </Suspense>
   );
 }
