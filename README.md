@@ -38,6 +38,21 @@ FoodHub is a modern food tracking application that helps you monitor your daily 
 - **Daily Summaries**: See calories, protein, and habits for any past day
 - **Detailed Views**: Expand meal sections to see individual items and their nutritional values
 
+### 📈 Trends & Analytics
+
+- **14-Day Trends**: Visualize your nutrition and habits over the last 14 days
+- **Calorie Trends**: Line chart showing daily calorie intake against your goal
+- **Protein Trends**: Track protein consumption trends over time
+- **Fruit Tracking**: Bar chart displaying daily fruit intake
+- **Workout Heatmap**: Visual representation of workout consistency
+
+### 👤 User Profile
+
+- **Personal Stats**: View your total meals eaten, foods saved, workouts logged, and fruits eaten
+- **Profile Management**: See your account information and profile picture
+- **Theme Settings**: Customize your app theme (light/dark mode)
+- **Account Management**: Log out securely from your account
+
 ### 🔐 Authentication & Security
 
 - **Google OAuth**: Secure authentication using Google Sign-In
@@ -54,13 +69,14 @@ FoodHub is a modern food tracking application that helps you monitor your daily 
 
 ## Tech Stack
 
-- **Framework**: [Next.js 16](https://nextjs.org/) with App Router
+- **Framework**: [Next.js 16.0.10](https://nextjs.org/) with App Router
 - **Authentication**: [NextAuth.js v5](https://authjs.dev/) with Google OAuth
 - **Database**: [MongoDB](https://www.mongodb.com/) with [Mongoose](https://mongoosejs.com/)
 - **Language**: [TypeScript](https://www.typescriptlang.org/)
 - **Styling**: [Tailwind CSS](https://tailwindcss.com/)
 - **UI Components**: [Radix UI](https://www.radix-ui.com/)
 - **Icons**: [Lucide React](https://lucide.dev/)
+- **Charts**: [Recharts](https://recharts.org/)
 - **Validation**: [Zod](https://zod.dev/)
 - **Theme Management**: [next-themes](https://github.com/pacocoursey/next-themes)
 
@@ -139,11 +155,14 @@ foodhub/
 │   ├── api/                # API routes
 │   │   └── auth/           # NextAuth authentication routes
 │   ├── history/            # Meal history pages
-│   └── page.tsx              # Home page (today's view)
+│   ├── profile/            # User profile page
+│   ├── trends/             # Trends and analytics page
+│   └── page.tsx            # Home page (today's view)
 ├── components/             # React components
 │   ├── ui/                 # Reusable UI components
 │   ├── bottom-nav.tsx      # Bottom navigation
-│   └── date-view.tsx       # Daily meal view component
+│   ├── date-view.tsx       # Daily meal view component
+│   └── trend-charts.tsx    # Chart components for trends
 ├── lib/                    # Utility functions and server actions
 │   ├── actions/            # Server actions for data operations
 │   ├── constants.ts        # App constants (goals, etc.)
